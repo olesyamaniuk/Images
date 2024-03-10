@@ -46,7 +46,6 @@ form.addEventListener('submit', async function handler(event) {
             lightbox.refresh();
             currentQuery = query;
             currentPage = 1;
-
             load.style.display = 'none';
             if(data.hits.length < 15 ){
                 loadMoreBtn.style.display = 'none';
@@ -62,40 +61,43 @@ form.addEventListener('submit', async function handler(event) {
     }
 });
 
-loadMoreBtn.addEventListener('click', function loadImages(event) {
-    event.preventDefault();
-  
-    list.insertAdjacentElement('afterend', load);
 
-    load.style.display = 'inline-block';
-    currentPage++;
-   
-    getImages(currentQuery, 15, currentPage).then(data => {
+loadMoreBtn.addEventListener('click', async function loadImages(event) {
+  event.preventDefault();
+  list.insertAdjacentElement('afterend', load);
+  load.style.display = 'inline-block';
+  currentPage++;
+
+  try {
+      const data = await getImages(currentQuery, 15, currentPage);
+
       if (data.hits.length === 0) {
-        loadMoreBtn.style.display = 'none';
-        return handlerErrorResult();
-      } else {
-        createMarkup(data.hits);
-        lightbox.refresh();
-        const boxFotos = list;
-        load.style.display = 'none';
-
-        const rect = boxFotos.getBoundingClientRect().height;
-        window.scrollBy({
-          top: rect * 2,
-          behavior: "smooth",
-        });
-  
-        if (data.hits.length < 15) {
           loadMoreBtn.style.display = 'none';
-          handlerErrorResult();
-        } else {
-          loadMoreBtn.style.display = 'block';
-        }
+          return handlerErrorResult();
+          
+      } else {
+          createMarkup(data.hits);
+          lightbox.refresh();
+          const boxFotos = list;
+          load.style.display = 'none';
+
+          const rect = boxFotos.getBoundingClientRect().height;
+          window.scrollBy({
+              top: rect * 2,
+              behavior: "smooth",
+          });
+
+          if (data.hits.length < 15) {
+              loadMoreBtn.style.display = 'none';
+              handlerErrorResult();
+          } else {
+              loadMoreBtn.style.display = 'block';
+          }
       }
-   
-        });
-      
+  } catch (error) {
+      console.error(error);
+      handlerErrorResult();
+  }
 });
 function handlerErrorResult() {
     iziToast.error({
@@ -103,4 +105,5 @@ function handlerErrorResult() {
       position: 'topRight',
     });
     loadMoreBtn.style.display = 'none';
+    load.style.display = 'none';
   }
