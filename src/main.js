@@ -27,19 +27,26 @@ const lightbox = new SimpleLightbox('.todo-list a.galery-link', {
 form.addEventListener('submit', async function handler(event) {
     event.preventDefault();
     const query = input.value;
+    list.innerHTML = '';
+    input.value = '';
     try {
         const data = await getImages( query, 15, 1);
         if( data.hits.length === 0){
             list.innerHTML = '';
             load.style.display = 'none';
             loadMoreBtn.classList.add('is-hidden');
-            return handlerError();
+            return iziToast.error({
+                      message: `Sorry, there are no images matching your search query. Please try again!`,
+                      position: 'topRight',  
+                  });
+            loadMoreBtn.style.display = 'none';
         }
         else{
             createMarkup(data.hits);
             lightbox.refresh();
             currentQuery = query;
-            currentPage = 1
+            currentPage = 1;
+
             load.style.display = 'none';
             if(data.hits.length < 15 ){
                 loadMoreBtn.style.display = 'none';
@@ -59,6 +66,7 @@ loadMoreBtn.addEventListener('click', function loadImages(event) {
     event.preventDefault();
   
     list.insertAdjacentElement('afterend', load);
+
     load.style.display = 'inline-block';
     currentPage++;
    
@@ -71,8 +79,12 @@ loadMoreBtn.addEventListener('click', function loadImages(event) {
         lightbox.refresh();
         const boxFotos = list;
         load.style.display = 'none';
-        const rect = boxFotos.getBoundingClientRect();
-        window.scrollBy(0, rect.height * 2);
+
+        const rect = boxFotos.getBoundingClientRect().height;
+        window.scrollBy({
+          top: rect * 2,
+          behavior: "smooth",
+        });
   
         if (data.hits.length < 15) {
           loadMoreBtn.style.display = 'none';
@@ -85,17 +97,10 @@ loadMoreBtn.addEventListener('click', function loadImages(event) {
         });
       
 });
-function handlerError(){
-    iziToast.error({
-        message: `Sorry, there are no images matching your search query. Please try again!`,
-        position: 'topRight',
-        
-    });
-}
-
 function handlerErrorResult() {
     iziToast.error({
       message: "We're sorry, but you've reached the end of search results.",
       position: 'topRight',
     });
+    loadMoreBtn.style.display = 'none';
   }
